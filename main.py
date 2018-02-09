@@ -40,7 +40,7 @@ regression = tflearn.regression(linear, optimizer='sgd', loss='mean_square',
                                 metric='R2', learning_rate=0.01)
 m = tflearn.DNN(regression)
 # m.fit(X, Y, n_epoch=1000, show_metric=True, snapshot_epoch=False)
-m.load('model/test.model')
+m.load('model/leads/leads-new.model')
 # m.predict([3.2, 3.3, 3.4])
 
 

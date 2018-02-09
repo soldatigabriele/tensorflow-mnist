@@ -41,7 +41,7 @@ regression = tflearn.regression(linear, optimizer='sgd', loss='mean_square',
 m = tflearn.DNN(regression)
 # m.fit(X, Y, n_epoch=1000, show_metric=True, snapshot_epoch=False)
 m.load('model/test.model')
-m.predict([3.2, 3.3, 3.4])
+# m.predict([3.2, 3.3, 3.4])
 
 
 # print("\nRegression result:")
@@ -110,11 +110,13 @@ def mnist():
     return jsonify(results=[output1, output2])
 
 
-@app.route('/')
+@app.route('/predict')
 def main():
+    data = request.args.get('data')    
     # return render_template('index.html')
-    m.load('model/test.model')
-    return jsonify( (m.predict([3.2, 3.3, 3.4])).tolist() )
+    # m.load('model/test.model')
+    return jsonify( (m.predict([data])).tolist() )
+    # return user
 
 
 if __name__ == '__main__':

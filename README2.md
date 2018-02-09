@@ -29,3 +29,5 @@
 or Heroku Button.
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
+gunicorn main:app --log-file=- -b 0.0.0.0:5000

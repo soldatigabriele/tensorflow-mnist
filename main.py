@@ -28,87 +28,61 @@ import os
 # import graphs.googlenet as googlenet
 # import graphs.convnet as conv
 
+max_amount_request = 0
+max_months = 0
+max_monthly_revenue = 0
+
+# Preprocessing function
+def preprocess(leads, columns_to_delete, max_amount_request, max_months, max_monthly_revenue):
+    # Sort by descending id and delete columns
+    for column_to_delete in sorted(columns_to_delete, reverse=True):
+        leads.pop(column_to_delete)
+        # [lead.pop(column_to_delete) for lead in leads]
+    return leads
+
 
 """ Linear Regression Example """
+data_size = [None, 3]
+LR = 0.001
 
-# from __future__ import absolute_import, division, print_function
+tf.reset_default_graph()
 
-# Linear Regression graph
-input_ = tflearn.input_data(shape=[None])
-linear = tflearn.single_unit(input_)
-regression = tflearn.regression(linear, optimizer='sgd', loss='mean_square',
-                                metric='R2', learning_rate=0.01)
-m = tflearn.DNN(regression)
-# m.fit(X, Y, n_epoch=1000, show_metric=True, snapshot_epoch=False)
+def titanic_network(shape, LR):
+
+    # # Build neural network
+    net = tflearn.input_data(shape=shape)
+    net = tflearn.fully_connected(net, 32)
+    net = tflearn.fully_connected(net, 2, activation='softmax')
+    net = tflearn.regression(net, learning_rate=LR, name='targets')
+    return net
+
+net = titanic_network(data_size, LR)
+
+# # Define model
+m = tflearn.DNN(net, tensorboard_verbose=0, tensorboard_dir='log')
+
 m.load('model/leads/leads-new.model')
-# m.predict([3.2, 3.3, 3.4])
-
-
-# print("\nRegression result:")
-# print("Y = " + str(m.get_weights(linear.W)) +
-       # "*X + " + str(m.get_weights(linear.b)))
-
-# print("\nTest prediction for x = 3.2, 3.3, 3.4:")
-
-
-def network(img_shape, name, LR):
-      
-    network = input_data(shape=img_shape, name=name )
-
-    network = conv_2d(network, 32, 2, activation='relu')
-    network = max_pool_2d(network,2)
-
-    network = conv_2d(network, 64, 2, activation='relu')
-    network = max_pool_2d(network,2)
-
-    network = fully_connected(network, 1024, activation='relu')
-    network = dropout(network, 0.8)
-    # 2 is the number of classes
-    network = fully_connected(network, 2, activation='softmax')
-    network = regression(network, optimizer='adam', learning_rate=LR, loss='categorical_crossentropy', name='targets')
-    
-    return network
-
-
-
-
-
-x = tf.placeholder("float", [None, 784])
-sess = tf.Session()
-
-# restore trained data
-with tf.variable_scope("regression"):
-    y1, variables = model.regression(x)
-saver = tf.train.Saver(variables)
-saver.restore(sess, "mnist/data/regression.ckpt")
-
-
-with tf.variable_scope("convolutional"):
-    keep_prob = tf.placeholder("float")
-    y2, variables = model.convolutional(x, keep_prob)
-saver = tf.train.Saver(variables)
-saver.restore(sess, "mnist/data/convolutional.ckpt")
-
-
-def regression(input):
-    return sess.run(y1, feed_dict={x: input}).flatten().tolist()
-
-
-def convolutional(input):
-    return sess.run(y2, feed_dict={x: input, keep_prob: 1.0}).flatten().tolist()
 
 
 # webapp
 app = Flask(__name__)
 
 
-@app.route('/api/mnist', methods=['POST'])
+@app.route('/predict', methods=['POST'])
 def mnist():
-    input = ((255 - np.array(request.json, dtype=np.uint8)) / 255.0).reshape(1, 784)
-    output1 = regression(input)
-    output2 = convolutional(input)
-    return jsonify(results=[output1, output2])
-
+    lista = []
+    data = request.form
+    for variables in data:
+        lista.append(float(request.form[variables]))
+    to_ignore=[0,1,2,3,7]
+    lista = preprocess(lista, to_ignore, max_amount_request, max_months, max_monthly_revenue)
+    result = m.predict([lista])
+    res = result[0]
+    return res
+    # return( jsonify(result[0] ))
+    # [1] is silver [0] is unrated
+    # return jsonify( result[0] )
+    # return( result[0][1] )
 
 @app.route('/predict')
 def main():
